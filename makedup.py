@@ -1,7 +1,9 @@
 import poser
 import re
 import random
-
+import wx
+import wx.py
+import wx.aui
 
 def eventCallbackFunc(iScene, iEventType):
     if(iEventType & poser.kEventCodeACTORSELECTIONCHANGED):
@@ -52,44 +54,72 @@ def FindBaseActor( oActor):
 # Main
 # ---------------------------------------------------------------------
 scene = poser.Scene()
+
+
 oActor = FindBaseActor(scene.CurrentActor())
 oProps = getPropbyName("dragon.*")
 
-
-#while oActor.Parent().Name() != "UNIVERSE":
-#     oActor = oActor.Parent()
+if oActor in oProps:
+    print("\nCannot use a dragon prop")
+    oProps = []
 
 ParamsToCopy = ["xTran","yTran","zTran","scale","xRotate","yRotate","zRotate"]
 
 for oProp in oProps:
     
+    print("Processing " + oProp.Name())
     sFigureName = oProp.CustomData("dragonchild")
     
     if sFigureName:
-        
+
         oFigure = scene.Figure(sFigureName)
         oNewActor = FindBaseActor(oFigure.ParentActor())
         
     else:
-        
+
+        print ("   Duplicating figure")
+
         oNewActor = FindBaseActor(Duplicate(oActor))
+        scene.ProcessSomeEvents( 1)
+
         oFigure = oNewActor.ItsFigure()
         
         if oFigure:
             dFrameNum =random.randint(0,scene.NumFrames() - 1)
+            print ("   Selecting frame number " + str(dFrameNum))
             scene.SetFrame(dFrameNum)
+            scene.ProcessSomeEvents( 1)
+            print ("   Memorising")
+
             oFigure.Memorize()
+            scene.ProcessSomeEvents( 3)
+            print ("   Setting frame to zero")
+
             scene.SetFrame(0)
+            scene.ProcessSomeEvents( 3)
+            print ("   Reset figure")
+
             oFigure.Reset()
+            scene.ProcessSomeEvents( 3)
+
             oProp.SetCustomData("dragonchild", oFigure.Name(),0,0)
             oProp.SetCustomData("dragonVisibility", 0,0,0)
+            scene.ProcessSomeEvents( 1)
             
-            oFigure.SetOnOff(0)
+            oFigure.SetDisplayStyle(poser.kDisplayCodeEDGESONLY)
+            scene.ProcessSomeEvents( 1)
+            print ("   Redrawing")
+
+            scene.Draw()
+            scene.ProcessSomeEvents( 10)
+            #oFigure.SetOnOff(0)
        
     copyParams(ParamsToCopy,oProp,oNewActor)
  
 scene.DrawAll()
-scene.SetEventCallback(eventCallbackFunc)
+print("\nFinished")
+
+#scene.SetEventCallback(eventCallbackFunc)
 
 #for oProp in oProps:
 #    print oProp.Name(),oProp.Parameter("scale").Value(),
